@@ -54,6 +54,28 @@ jobs:
       - name: Verify only intended files would be published
         run: pnpm pack:check
 
+  framework-types:
+    name: Framework package types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      # These packages are published separately and their tests run under the
+      # root suite, but nothing type-checked them before, which let framework
+      # hooks drift away from the SDK's typed exports.
+      - run: pnpm --filter @wraith-protocol/sdk-react test:types
+      - run: pnpm --filter @wraith-protocol/sdk-vue test:types
+      - run: pnpm --filter @wraith-protocol/sdk-solid test:types
+      - run: pnpm --filter @wraith-protocol/sdk-svelte typecheck
+
   compat:
     name: Compatibility matrix (${{ matrix.name }})
     runs-on: ubuntu-latest
